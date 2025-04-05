@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Project Mayhem - Разгром</title>
+  <style>
+    body {
+      background-color: black;
+      color: #00ff88;
+      font-family: monospace;
+      padding: 20px;
+      position: relative;
+    }
+
+    #status {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+    }
+
+    .action-btn {
+      background: transparent;
+      border: 1px solid #ff0044;
+      padding: 10px 20px;
+      color: #ff0044;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    .action-btn:disabled {
+      background-color: #444;
+      cursor: not-allowed;
+    }
+
+    .upgrade-card {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #ff0044;
+    }
+
+    .card-level {
+      margin-top: 10px;
+      font-size: 1rem;
+      color: #ff0044;
+    }
+
+    #explosion {
+      margin-top: 30px;
+      font-size: 1.2rem;
+      color: #ff0044;
+    }
+
+    .footer {
+      position: fixed;
+      bottom: 10px;
+      width: 100%;
+      text-align: center;
+      color: #444;
+      font-size: 0.9rem;
+    }
+
+    .action-list {
+      margin-top: 20px;
+    }
+
+    .action-item {
+      margin-bottom: 10px;
+    }
+
+    #matrix {
+      position: fixed;
+      top: 0; left: 0;
+      z-index: -1;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="status">
+    Reputation: <span id="reputation">100</span><br>
+    Income per second: <span id="income">0.0</span><br>
+    <button class="action-btn" id="burnPhoneBtn">Burn Phone (Cost: 1 Rep)</button>
+  </div>
+
+  <div id="action-list" class="action-list">
+    <div class="action-item">
+      <button class="action-btn" id="burnCarBtn">Burn Car (Cost: 5 Rep)</button>
+      <div id="burnCarLevel" class="card-level">Car Level: 1</div>
+    </div>
+    <div class="action-item">
+      <button class="action-btn" id="holdRallyBtn">Hold Rally (Cost: 10 Rep)</button>
+      <div id="rallyLevel" class="card-level">Rally Level: 1</div>
+    </div>
+    <div class="action-item">
+      <button class="action-btn" id="createFightClubBtn">Create Fight Club (Cost: 20 Rep)</button>
+      <div id="fightClubLevel" class="card-level">Fight Club Level: 1</div>
+    </div>
+  </div>
+
+  <div id="explosion">
+    <button class="action-btn" id="buyExplosionBtn" disabled>Buy Bank Explosion (Cost: 1000 Rep)</button>
+  </div>
+
+  <div class="footer">
+    Create @megadanzh<br>
+    Create for @brucelee23
+  </div>
+
+  <!-- Canvas for the Matrix effect -->
+  <canvas id="matrix"></canvas>
+
+  <script>
+    // Получаем данные из localStorage
+    let reputation = parseFloat(localStorage.getItem("reputation") || "100");
+    let incomePerSec = parseFloat(localStorage.getItem("incomePerSec") || "0.0");
+    let carLevel = parseInt(localStorage.getItem("carLevel") || "1");
+    let rallyLevel = parseInt(localStorage.getItem("rallyLevel") || "1");
+    let fightClubLevel = parseInt(localStorage.getItem("fightClubLevel") || "1");
+
+    const reputationDisplay = document.getElementById("reputation");
+    const incomeDisplay = document.getElementById("income");
+    const burnPhoneBtn = document.getElementById("burnPhoneBtn");
+    const burnCarBtn = document.getElementById("burnCarBtn");
+    const holdRallyBtn = document.getElementById("holdRallyBtn");
+    const createFightClubBtn = document.getElementById("createFightClubBtn");
+    const buyExplosionBtn = document.getElementById("buyExplosionBtn");
+    const burnCarLevelDisplay = document.getElementById("burnCarLevel");
+    const rallyLevelDisplay = document.getElementById("rallyLevel");
+    const fightClubLevelDisplay = document.getElementById("fightClubLevel");
+
+    const updateStatus = () => {
+      reputationDisplay.textContent = reputation.toFixed(1);
+      incomeDisplay.textContent = incomePerSec.toFixed(1);
+      // Включаем/выключаем кнопки в зависимости от репутации
+      burnPhoneBtn.disabled = reputation < 1;
+      burnCarBtn.disabled = reputation < 5;
+      holdRallyBtn.disabled = reputation < 10;
+      createFightClubBtn.disabled = reputation < 20;
+      buyExplosionBtn.disabled = reputation < 1000;
+    }
+
+    const earnReputation = () => {
+      reputation += incomePerSec / 10;  // Репутация начисляется каждую 1/10 секунды
+      localStorage.setItem("reputation", reputation.toFixed(1));
+      updateStatus();
+    }
+
+    // Инкремент репутации каждую 1/10 секунды
+    setInterval(earnReputation, 100);
+
+    // Действие: сжигаем телефон за 1 репутацию, увеличиваем доход на 0.1
+    burnPhoneBtn.addEventListener("click", () => {
+      if (reputation >= 1) {
+        reputation -= 1;
+        incomePerSec += 0.1;
+        localStorage.setItem("reputation", reputation.toFixed(1));
+        localStorage.setItem("incomePerSec", incomePerSec.toFixed(1));
+        updateStatus();
+      }
+    });
+
+    // Сжигание машины, +0.2 репутации в секунду
+    burnCarBtn.addEventListener("click", () => {
+      if (reputation >= 5) {
+        reputation -= 5;
+        incomePerSec += 0.2;
+        carLevel += 1;
+        localStorage.setItem("reputation", reputation.toFixed(1));
+        localStorage.setItem("incomePerSec", incomePerSec.toFixed(1));
+        localStorage.setItem("carLevel", carLevel);
+        updateStatus();
+        burnCarLevelDisplay.textContent = `Car Level: ${carLevel}`;
+      }
+    });
+
+    // Устройство митинга, +0.3 репутации в секунду
+    holdRallyBtn.addEventListener("click", () => {
+      if (reputation >= 10) {
+        reputation -= 10;
+        incomePerSec += 0.3;
+        rallyLevel += 1;
+        localStorage.setItem("reputation", reputation.toFixed(1));
+        localStorage.setItem("incomePerSec", incomePerSec.toFixed(1));
+        localStorage.setItem("rallyLevel", rallyLevel);
+        updateStatus();
+        rallyLevelDisplay.textContent = `Rally Level: ${rallyLevel}`;
+      }
+    });
+
+    // Создание бойцовского клуба, +0.5 репутации в секунду
+    createFightClubBtn.addEventListener("click", () => {
+      if (reputation >= 20) {
+        reputation -= 20;
+        incomePerSec += 0.5;
+        fightClubLevel += 1;
+        localStorage.setItem("reputation", reputation.toFixed(1));
+        localStorage.setItem("incomePerSec", incomePerSec.toFixed(1));
+        localStorage.setItem("fightClubLevel", fightClubLevel);
+        updateStatus();
+        fightClubLevelDisplay.textContent = `Fight Club Level: ${fightClubLevel}`;
+      }
+    });
+
+    // Покупка взрыва банков
+    buyExplosionBtn.addEventListener("click", () => {
+      if (reputation >= 1000) {
+        reputation -= 1000;
+        localStorage.setItem("reputation", reputation.toFixed(1));
+        updateStatus();
+        alert("Bank Explosion Purchased! You have destroyed the banks!");
+      }
+    });
+
+    updateStatus();
+
+    // Matrix effect
+    const canvas = document.getElementById("matrix");
+    const ctx = canvas.getContext("2d");
+    canvas.height = window.innerHeight;
+    canvas.width = window.innerWidth;
+
+    const binary = "01";
+    const fontSize = 16;
+    const columns = Math.floor(canvas.width / fontSize);
+    const drops = Array(columns).fill(1);
+
+    function drawMatrix() {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#00FF44";
+      ctx.font = fontSize + "px monospace";
+
+      for (let i = 0; i < drops.length; i++) {
+        const text = binary[Math.floor(Math.random() * binary.length)];
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+        drops[i]++;
+      }
+    }
+
+    setInterval(drawMatrix, 50);
+
+  </script>
+
+</body>
+</html>

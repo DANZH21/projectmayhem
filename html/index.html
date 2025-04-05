@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Project Mayhem</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: monospace; }
+    body { background: black; overflow: hidden; color: #00ff88; }
+
+    canvas {
+      position: fixed;
+      top: 0; left: 0;
+      z-index: 0;
+    }
+
+    .background-image {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('../image/tyler0101.png') center/cover no-repeat;
+      z-index: 1;
+      opacity: 0.5;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0; left: 0;
+      z-index: 2;
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      pointer-events: none;
+    }
+
+    .trust {
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+      color: #ff0044;
+      pointer-events: auto;
+    }
+
+    #sacrificeBtn {
+      background: transparent;
+      border: 2px solid #ff0044;
+      color: #ff0044;
+      padding: 20px 40px;
+      font-size: 1.4rem;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+
+    .message {
+      margin-top: 20px;
+      font-size: 1rem;
+      color: #00ff88;
+      text-align: center;
+      min-height: 1.5em;
+    }
+
+    .footer {
+      position: fixed;
+      bottom: 10px;
+      width: 100%;
+      text-align: center;
+      color: #444;
+      font-size: 0.9rem;
+      z-index: 3;
+    }
+
+    .nft-modal {
+      position: fixed;
+      top: 0; left: 0;
+      z-index: 999;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.9);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: #ff0044;
+      font-size: 1.2rem;
+      text-align: center;
+      display: none;
+    }
+
+    .nft-modal.show {
+      display: flex;
+    }
+
+    .nft-name {
+      font-size: 1.4rem;
+      color: #00ff88;
+      margin-bottom: 20px;
+    }
+
+    #claimBtn, #inventoryBtn {
+      background: transparent;
+      border: 1px solid #00ff88;
+      padding: 10px 20px;
+      color: #00ff88;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 10px;
+      pointer-events: auto;
+    }
+
+    .tyler-message {
+      position: fixed;
+      top: 10%;
+      width: 100%;
+      text-align: center;
+      color: #ff0044;
+      font-size: 1.2rem;
+      z-index: 4;
+      display: none;
+    }
+
+    #playRealGameBtn {
+      background: transparent;
+      border: 1px solid #ff0044;
+      color: #ff0044;
+      padding: 10px 20px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 20px;
+      display: none;
+      pointer-events: auto;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="matrix"></canvas>
+
+  <!-- Background image added here -->
+  <div class="background-image"></div>
+
+  <div class="overlay">
+    <div class="trust">Trust Level: <span id="trust">0.0</span>%</div>
+    <button id="sacrificeBtn">OFFER</button>
+    <div class="message" id="message">You are not your data.</div>
+    <button id="inventoryBtn">Inventory</button>
+    <button id="playRealGameBtn">Play Real Game</button>
+  </div>
+
+  <div class="nft-modal" id="nftModal">
+    <div class="nft-name" id="nftName">NFT DROP</div>
+    <button id="claimBtn">CLAIM</button>
+  </div>
+
+  <div class="tyler-message" id="tylerMsg">
+    @brucelee23 (Tyler Durden) is proud of you
+  </div>
+
+  <div class="footer">
+    Create @megadanzh<br>
+    Create for @brucelee23
+  </div>
+
+  <script>
+    let trust = parseFloat(localStorage.getItem("trust") || "0.0");
+    const trustDisplay = document.getElementById("trust");
+    const btn = document.getElementById("sacrificeBtn");
+    const msg = document.getElementById("message");
+    const nftModal = document.getElementById("nftModal");
+    const nftName = document.getElementById("nftName");
+    const claimBtn = document.getElementById("claimBtn");
+    const tylerMsg = document.getElementById("tylerMsg");
+    const playRealGameBtn = document.getElementById("playRealGameBtn");
+
+    const messages = [
+      "You are not your data.",
+      "Tyler accepts.",
+      "Erase yourself.",
+      "This is your life.",
+      "Sacrifice complete.",
+      "Identity = illusion.",
+      "Burn the metadata.",
+      "Project Mayhem grows."
+    ];
+
+    const saveNFT = (nft) => {
+      const stored = JSON.parse(localStorage.getItem("nftInventory") || "[]");
+      stored.push(nft);
+      localStorage.setItem("nftInventory", JSON.stringify(stored));
+    }
+
+    const updateTrustDisplay = () => {
+      trustDisplay.innerText = trust.toFixed(1);
+    }
+
+    btn.addEventListener("click", () => {
+      if (trust < 100) {
+        trust = Math.round((trust + 0.5) * 10) / 10;
+        localStorage.setItem("trust", trust.toFixed(1));
+        updateTrustDisplay();
+
+        const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+        msg.innerText = randomMessage;
+
+        if (trust % 5 === 0 && trust <= 100) {
+          const types = ["WORM", "VOID", "OBEY", "LOST", "ANON"];
+          const nft = `${types[Math.floor(Math.random() * types.length)]}_#${String(Date.now()).slice(-4)}`;
+          nftName.innerText = `NFT DROP: ${nft}`;
+          saveNFT(nft);
+          nftModal.classList.add("show");
+        }
+      }
+
+      if (trust === 100.0) {
+        tylerMsg.style.display = 'block';
+        playRealGameBtn.style.display = 'inline-block'; // Показать кнопку "Play Real Game"
+      }
+    });
+
+    claimBtn.addEventListener("click", () => {
+      nftModal.classList.remove("show");
+    });
+
+    document.getElementById("inventoryBtn").addEventListener("click", () => {
+      window.location.href = "inventory.html";
+    });
+
+    playRealGameBtn.addEventListener("click", () => {
+      window.location.href = "real_game.html"; // Перенаправление на страницу "real_game.html"
+    });
+
+    updateTrustDisplay();
+
+    // Matrix BG
+    const canvas = document.getElementById("matrix");
+    const ctx = canvas.getContext("2d");
+    canvas.height = window.innerHeight;
+    canvas.width = window.innerWidth;
+
+    const binary = "01";
+    const fontSize = 16;
+    const columns = Math.floor(canvas.width / fontSize);
+    const drops = Array(columns).fill(1);
+
+    function drawMatrix() {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#00FF44";
+      ctx.font = fontSize + "px monospace";
+
+      for (let i = 0; i < drops.length; i++) {
+        const text = binary[Math.floor(Math.random() * binary.length)];
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+        drops[i]++;
+      }
+    }
+    setInterval(drawMatrix, 50);
+  </script>
+</body>
+</html>
